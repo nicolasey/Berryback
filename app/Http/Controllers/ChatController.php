@@ -31,7 +31,8 @@ class ChatController extends BaseController
 					message_contents AS contents
  					FROM roomChat_$box rc
  					JOIN user u ON rc.message_author = u.user_token
- 					JOIN user_preferences up ON rc.message_author = up.user_token";
+ 					JOIN user_preferences up ON rc.message_author = up.user_token
+ 					ORDER BY message_id ASC";
 		$chat = DB::select($stmt);
 
 		return json_encode($chat);

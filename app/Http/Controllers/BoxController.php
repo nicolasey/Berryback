@@ -114,28 +114,6 @@ class BoxController extends BaseController
         return json_encode($users);
     }
 
-    // GET playlist
-    public function playlist($box)
-    {
-        $playlist = DB::select("SELECT
-                    room_history_id,
-                    playlist_order,
-                    video_index,
-                    link,
-                    video_name
-                    history_user,
-                    history_time,
-                    video_status,
-                    pending,
-                    user_pseudo
-                    FROM roomHistory_$box rh
-                    JOIN song_base sb ON rh.video_index = sb.song_base_id
-                    LEFT JOIN user u ON rh.history_user = u.user_token
-                    ORDER BY playlist_order DESC");
-
-        return json_encode($playlist);
-    }
-
     // POST to playlist
     public function submit($box)
     {

@@ -19,14 +19,17 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::group(['prefix' => 'v1', 'middleware' => 'cors'], function(){
     Route::resource('boxes', 'BoxController');
-    Route::get('boxes/{token}/users', 'BoxController@users');
-    Route::get('boxes/{token}/playlist', 'BoxController@playlist');
-    Route::post('boxes/{token}/playlist', 'BoxController@submit');
 
-    Route::get('chat/{token}', 'ChatController@listing');
-    Route::post('chat/{token}', 'ChatController@store');
-    Route::put('chat/{token}', 'ChatController@update');
-    Route::delete('chat/{token}/message/{message}', 'ChatController@destroy');
+    Route::get('box/{token}/users', 'BoxController@users');
+
+    Route::get('box/{token}/playlist/all', 'PlayerController@listing');
+	Route::get('box/{token}/playlist/current', 'PlayerController@current');
+	Route::post('box/{token}/playlist', 'PlayerController@store');
+
+    Route::get('box/{token}/chat/all', 'ChatController@listing');
+    Route::post('box/{token}/chat', 'ChatController@store');
+    Route::put('box/{token}/chat', 'ChatController@update');
+    Route::delete('box/{token}/chat/message/{message}', 'ChatController@destroy');
 
     Route::resource('user', 'UserController');
     Route::get('user/{token}/boxes', 'UserController@boxes');
