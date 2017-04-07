@@ -54,6 +54,37 @@ class PlayerController extends BaseController
 
 	// POST a video
 	public function store($box){
+		$link = json_decode(file_get_contents("php://input"), true);
+
+		$stmt = "SELECT * FROM song_base WHERE link = :link";
+
+		$base = DB::select($stmt, ['link' => $link]);
+
+		if(count($base) == 0){
+			try{
+				$contents = file_get_contents("http://youtube.com/get_video_info?video_id=".$link);
+				parse_str($contents, $ytarr);
+				$title = addslashes($ytarr['title']);
+				$pending = 0;
+				if($title == ""){
+					$title = "-";
+					$pending = 1;
+				}
+				$this->insertToBase(["link" => $link, "title" => $title, "pending" => $pending]);
+			} catch(\PDOException $e){
+				$title = "-";
+				$pending = 1;
+			}
+		} else {
+			$pending = $base[0]["pending"];
+		}
+
+		$order = $this->getLastOrder($box);
+
+		$this->insertToBox(["index" => $link, "order" => $order, "user" => "D1JU70"]);
+
+		echo json_encode("Video submitted successfully");
+		http_response_code(201);
 
 	}
 
@@ -74,5 +105,41 @@ class PlayerController extends BaseController
 		$current = DB::select($stmt);
 
 		return json_encode($current[0]);
+	}
+
+	private function insertToBase(Array $video){
+		$stmt = "INSERT INTO song_base(link, video_name, pending)
+					VALUES(:link, :title, :pending)";
+
+		$insert = DB::select($stmt, [
+			"link" => $video["link"],
+			"title" => $video["title"],
+			"pending" => $video["pending"]
+		]);
+
+		return $insert;
+	}
+
+	private function getLastOrder($token){
+		$stmt = "SELECT playlist_order FROM roomHistory_$token
+					ORDER BY playlist_order DESC LIMIT 1";
+
+		$order = DB::select($stmt);
+
+		return ($order != null)?$order[0]++:1;
+	}
+
+	private function insertToBox(Array $video){
+		$stmt = "INSERT INTO roomhistory_$box(video_index, playlist_order, history_time, history_user)
+					VALUES(:index, :order, :time, :user)";
+
+		$now = new \DateTime();
+
+		$insert = DB::select($stmt, [
+			':index' => $video["index"],
+			':order' => $video["order"],
+			':time' => $now,
+			':user' => 'D1JU70'
+		]);
 	}
 }
