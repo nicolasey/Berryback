@@ -111,7 +111,56 @@ class PlayerController extends BaseController
 
 		$current = DB::select($stmt);
 
-		return json_encode($current[0]);
+		if(!$current){
+			$current = $this->next($boxToken);
+			return $current;
+		} else {
+			return json_encode($current[0]);
+		}
+
+	}
+
+	// GET the next video in the playlist
+	public function next($boxToken){
+		$stmt = "SELECT video_index,
+						history_user,
+						link,
+						video_name,
+						user_pseudo,
+						playlist_order
+					FROM roomhistory_$boxToken rh
+					JOIN song_base sb ON rh.video_index = sb.song_base_id
+					JOIN user u ON rh.history_user = u.user_token
+					WHERE video_status = 0
+					ORDER BY playlist_order ASC
+					LIMIT 1";
+
+		$next = DB::select($stmt);
+		$next = $next[0];
+
+		// We skip over ignored videos and put them all to 2 as well as the one that just ended
+		if(count($next) != 0){
+			DB::table('roomHistory_'.$boxToken)
+				->where([
+					['playlist_order', '<', $next->playlist_order],
+					['video_status', '!=', 2]
+				])
+				->update(['video_status' => 2]);
+		}
+
+		$this->playing($boxToken, $next->playlist_order);
+
+		return json_encode($next);
+	}
+
+	private function playing($boxToken, $playlistOrder){
+		$now = new \DateTime();
+		DB::table('roomHistory_'.$boxToken)
+			->where('playlist_order', $playlistOrder)
+			->update([
+				'video_status' => 1,
+				'history_start' => $now
+			]);
 	}
 
 	private function insertToBase(Array $video){
