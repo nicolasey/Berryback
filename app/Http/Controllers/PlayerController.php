@@ -8,13 +8,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
-use App\Box;
+use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\DB;
 
 class PlayerController extends BaseController
 {
@@ -31,7 +30,7 @@ class PlayerController extends BaseController
 	}*/
 
 	// Fetches playlist for a box
-	public function listing($box){
+	public function listing($boxToken){
 		$stmt = "SELECT
                     room_history_id,
                     playlist_order,
@@ -43,7 +42,7 @@ class PlayerController extends BaseController
                     video_status,
                     pending,
                     user_pseudo
-                    FROM roomHistory_$box rh
+                    FROM roomHistory_$boxToken rh
                     JOIN song_base sb ON rh.video_index = sb.song_base_id
                     LEFT JOIN user u ON rh.history_user = u.user_token
                     ORDER BY playlist_order DESC";
@@ -53,49 +52,57 @@ class PlayerController extends BaseController
 	}
 
 	// POST a video
-	public function store($box){
-		$link = json_decode(file_get_contents("php://input"), true);
+	public function store($boxToken){
+		$video = json_decode(file_get_contents("php://input"), true);
+		$link = $video["link"];
+		$author = $video["author"];
 
-		$stmt = "SELECT * FROM song_base WHERE link = :link";
-
-		$base = DB::select($stmt, ['link' => $link]);
+		$base = DB::table('song_base')
+			->where('link', $link)
+			->first();
 
 		if(count($base) == 0){
 			try{
 				$contents = file_get_contents("http://youtube.com/get_video_info?video_id=".$link);
-				parse_str($contents, $ytarr);
-				$title = addslashes($ytarr['title']);
+				parse_str($contents, $youtubeData);
+				$title = addslashes($youtubeData['title']);
+				$duration = $youtubeData['length_seconds'];
 				$pending = 0;
 				if($title == ""){
 					$title = "-";
 					$pending = 1;
 				}
-				$this->insertToBase(["link" => $link, "title" => $title, "pending" => $pending]);
 			} catch(\PDOException $e){
 				$title = "-";
 				$pending = 1;
 			}
+			$index = $this->insertToBase(["link" => $link, "title" => $title, "pending" => $pending, "duration" => $duration]);
 		} else {
-			$pending = $base[0]["pending"];
+			$index = $base->song_base_id;
 		}
 
-		$order = $this->getLastOrder($box);
+		$order = $this->getLastOrder($boxToken);
 
-		$this->insertToBox(["index" => $link, "order" => $order, "user" => "D1JU70"]);
+		$insertStatus = $this->insertToBox($boxToken, ["index" => $index, "order" => $order, "author" => $author]);
 
-		echo json_encode("Video submitted successfully");
-		http_response_code(201);
+		if($insertStatus){
+			echo json_encode("Video submitted successfully.");
+			http_response_code(201);
+		} else {
+			echo json_encode("An error occurred. Please try again.");
+			http_response_code(500);
+		}
 
 	}
 
 	// GET the current playing video
-	public function current($box){
+	public function current($boxToken){
 		$stmt = "SELECT video_index,
 					history_start,
 					link,
 					video_name,
 					user_pseudo
-					FROM roomhistory_$box rh
+					FROM roomhistory_$boxToken rh
 					JOIN song_base sb ON rh.video_index = sb.song_base_id
 					JOIN user u ON rh.history_user = u.user_token
 					WHERE video_status = 1
@@ -108,38 +115,34 @@ class PlayerController extends BaseController
 	}
 
 	private function insertToBase(Array $video){
-		$stmt = "INSERT INTO song_base(link, video_name, pending)
-					VALUES(:link, :title, :pending)";
+		$id = DB::table('song_base')->insertGetId([
+			'link' => $video["link"],
+			'video_name' => $video["title"],
+			'pending' => $video["pending"],
+			'duration' => $video["duration"]
+		], 'song_base_id');
 
-		$insert = DB::select($stmt, [
-			"link" => $video["link"],
-			"title" => $video["title"],
-			"pending" => $video["pending"]
-		]);
-
-		return $insert;
+		return $id;
 	}
 
-	private function getLastOrder($token){
-		$stmt = "SELECT playlist_order FROM roomHistory_$token
-					ORDER BY playlist_order DESC LIMIT 1";
+	private function getLastOrder($boxToken){
+		$order = DB::table('roomHistory_'.$boxToken)
+			->latest('playlist_order')
+			->pluck('playlist_order')
+			->first();
 
-		$order = DB::select($stmt);
-
-		return ($order != null)?$order[0]++:1;
+		return ($order != null) ? ++$order : 1;
 	}
 
-	private function insertToBox(Array $video){
-		$stmt = "INSERT INTO roomhistory_$box(video_index, playlist_order, history_time, history_user)
-					VALUES(:index, :order, :time, :user)";
-
+	private function insertToBox($boxToken, Array $video){
 		$now = new \DateTime();
 
-		$insert = DB::select($stmt, [
-			':index' => $video["index"],
-			':order' => $video["order"],
-			':time' => $now,
-			':user' => 'D1JU70'
+		$insert = DB::table('roomHistory_'.$boxToken)->insert([
+			'video_index' => $video["index"],
+			'playlist_order' => $video["order"],
+			'history_time' => $now,
+			'history_user' => $video["author"]
 		]);
+		return $insert;
 	}
 }
