@@ -65,13 +65,9 @@ class PlayerController extends BaseController
 			try{
 				$contents = file_get_contents("http://youtube.com/get_video_info?video_id=".$link);
 				parse_str($contents, $youtubeData);
-				$title = addslashes($youtubeData['title']);
-				$duration = $youtubeData['length_seconds'];
-				$pending = 0;
-				if($title == ""){
-					$title = "-";
-					$pending = 1;
-				}
+				$title = (isset($youtubeData['title']))?addslashes($youtubeData['title']):"-";
+				$duration = (isset($youtubeData['length_seconds']))?$youtubeData['length_seconds']:NULL;
+				$pending = (isset($youtubeData['title']))?0:1;
 			} catch(\PDOException $e){
 				$title = "-";
 				$pending = 1;
@@ -136,21 +132,21 @@ class PlayerController extends BaseController
 					LIMIT 1";
 
 		$next = DB::select($stmt);
-		$next = $next[0];
 
 		// We skip over ignored videos and put them all to 2 as well as the one that just ended
 		if(count($next) != 0){
+			$next = $next[0];
 			DB::table('roomHistory_'.$boxToken)
 				->where([
 					['playlist_order', '<', $next->playlist_order],
 					['video_status', '!=', 2]
 				])
 				->update(['video_status' => 2]);
+			$this->playing($boxToken, $next->playlist_order);
+			return json_encode($next);
+		} else {
+			return json_encode(false);
 		}
-
-		$this->playing($boxToken, $next->playlist_order);
-
-		return json_encode($next);
 	}
 
 	private function playing($boxToken, $playlistOrder){
