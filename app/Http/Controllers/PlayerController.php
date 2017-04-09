@@ -36,7 +36,7 @@ class PlayerController extends BaseController
                     playlist_order,
                     video_index,
                     link,
-                    video_name
+                    video_name,
                     history_user,
                     history_time,
                     video_status,
