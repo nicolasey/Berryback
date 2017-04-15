@@ -60,7 +60,7 @@ class PlayerController extends BaseController
 			try{
 				$contents = file_get_contents("http://youtube.com/get_video_info?video_id=".$link);
 				parse_str($contents, $youtubeData);
-				$title = (isset($youtubeData['title']))?addslashes($youtubeData['title']):"-";
+				$title = (isset($youtubeData['title']))?$youtubeData['title']:"-";
 				$duration = (isset($youtubeData['length_seconds']))?$youtubeData['length_seconds']:NULL;
 				$pending = (isset($youtubeData['title']))?0:1;
 			} catch(\PDOException $e){
