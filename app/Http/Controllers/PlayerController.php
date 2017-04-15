@@ -93,7 +93,8 @@ class PlayerController extends BaseController
 		$current = DB::table($table)
 			->join('song_base', $table.'.video_index', '=', 'song_base.song_base_id')
 			->join('user', $table.'.history_user', '=', 'user.user_token')
-			->select('video_index', 'history_start', 'link', 'video_name', 'user_pseudo')
+			->join('user_preferences', $table.'.history_user', '=', 'user_preferences.user_token')
+			->select('video_index', 'history_start', 'link', 'video_name', 'user_pseudo', 'up_color')
 			->where('video_status', 1)
 			->orderBy('playlist_order')
 			->first();
@@ -114,13 +115,14 @@ class PlayerController extends BaseController
 		$next = DB::table($table)
 			->join('song_base', $table.'.video_index', '=', 'song_base.song_base_id')
 			->join('user', $table.'.history_user', '=', 'user.user_token')
-			->select('video_index', 'history_user', 'link', 'video_name', 'playlist_order')
+			->join('user_preferences', $table.'.history_user', '=', 'user_preferences.user_token')
+			->select('video_index', 'history_user', 'link', 'video_name', 'playlist_order', 'user_pseudo', 'up_color')
 			->where('video_status', 0)
-			->orderBy('playlist_order')
+			->orderBy('playlist_order', 'asc')
 			->first();
 
 		// We skip over ignored videos and put them all to 2 as well as the one that just ended
-		if(count($next) != 0){
+		if($next){
 			DB::table('roomHistory_'.$boxToken)
 				->where([
 					['playlist_order', '<', $next->playlist_order],
