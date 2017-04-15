@@ -159,6 +159,33 @@ class PlayerController extends BaseController
 		http_response_code(200);
 		return json_encode("Video updated successfully");
 	}
+
+	// Shuffles playlist
+	public function shuffle($boxToken){
+
+		$query = DB::table('roomHistory_'.$boxToken)
+			->whereIn('video_status', [0, 3]);
+
+		$queue = $query
+			->select('room_history_id')
+			->inRandomOrder()
+			->get();
+
+		$order = $query
+			->select('playlist_order')
+			->inRandomOrder()
+			->get();
+
+		for($i = 0; $i < sizeof($queue); $i++){
+			DB::table('roomHistory_'.$boxToken)
+				->where('room_history_id', $queue[$i]->room_history_id)
+				->update(['playlist_order' => $order[$i]->playlist_order]);
+		}
+
+		http_response_code(200);
+		echo json_encode("Playlist shuffled succesfully");
+	}
+
 	private function playing($boxToken, $playlistOrder){
 		$now = new \DateTime();
 		DB::table('roomHistory_'.$boxToken)
