@@ -31,24 +31,19 @@ class PlayerController extends BaseController
 
 	// Fetches playlist for a box
 	public function listing($boxToken){
-		$stmt = "SELECT
-                    room_history_id,
-                    playlist_order,
-                    video_index,
-                    link,
-                    video_name,
-                    history_user,
-                    history_time,
-                    video_status,
-                    pending,
-                    user_pseudo
-                    FROM roomHistory_$boxToken rh
-                    JOIN song_base sb ON rh.video_index = sb.song_base_id
-                    LEFT JOIN user u ON rh.history_user = u.user_token
-                    ORDER BY playlist_order DESC";
-		$playlist = DB::select($stmt);
+		$table = 'roomHistory_'.$boxToken;
 
-		return json_encode($playlist);
+		$listing = DB::table($table)
+			->join('song_base', $table.'.video_index', '=', 'song_base.song_base_id')
+			->leftJoin('user', $table.'.history_user', '=', 'user.user_token')
+			->select('room_history_id', 'playlist_order', 'video_index', 'link',
+				'video_name', 'history_user', 'history_time', 'video_status',
+				'pending', 'user_pseudo')
+			->orderBy('playlist_order', 'desc')
+			->get();
+
+		http_response_code(200);
+		return json_encode($listing);
 	}
 
 	// POST a video
@@ -93,49 +88,39 @@ class PlayerController extends BaseController
 
 	// GET the current playing video
 	public function current($boxToken){
-		$stmt = "SELECT video_index,
-					history_start,
-					link,
-					video_name,
-					user_pseudo
-					FROM roomhistory_$boxToken rh
-					JOIN song_base sb ON rh.video_index = sb.song_base_id
-					JOIN user u ON rh.history_user = u.user_token
-					WHERE video_status = 1
-					ORDER BY playlist_order DESC
-					LIMIT 1";
+		$table = 'roomHistory_'.$boxToken;
 
-		$current = DB::select($stmt);
+		$current = DB::table($table)
+			->join('song_base', $table.'.video_index', '=', 'song_base.song_base_id')
+			->join('user', $table.'.history_user', '=', 'user.user_token')
+			->select('video_index', 'history_start', 'link', 'video_name', 'user_pseudo')
+			->where('video_status', 1)
+			->orderBy('playlist_order')
+			->first();
 
-		if(!$current){
+		http_response_code(200);
+		if(!$current) {
 			$current = $this->next($boxToken);
 			return $current;
 		} else {
-			return json_encode($current[0]);
+			return json_encode($current);
 		}
-
 	}
 
 	// GET the next video in the playlist
 	public function next($boxToken){
-		$stmt = "SELECT video_index,
-						history_user,
-						link,
-						video_name,
-						user_pseudo,
-						playlist_order
-					FROM roomhistory_$boxToken rh
-					JOIN song_base sb ON rh.video_index = sb.song_base_id
-					JOIN user u ON rh.history_user = u.user_token
-					WHERE video_status = 0
-					ORDER BY playlist_order ASC
-					LIMIT 1";
+		$table = 'roomHistory_'.$boxToken;
 
-		$next = DB::select($stmt);
+		$next = DB::table($table)
+			->join('song_base', $table.'.video_index', '=', 'song_base.song_base_id')
+			->join('user', $table.'.history_user', '=', 'user.user_token')
+			->select('video_index', 'history_user', 'link', 'video_name', 'playlist_order')
+			->where('video_status', 0)
+			->orderBy('playlist_order')
+			->first();
 
 		// We skip over ignored videos and put them all to 2 as well as the one that just ended
 		if(count($next) != 0){
-			$next = $next[0];
 			DB::table('roomHistory_'.$boxToken)
 				->where([
 					['playlist_order', '<', $next->playlist_order],
@@ -143,8 +128,11 @@ class PlayerController extends BaseController
 				])
 				->update(['video_status' => 2]);
 			$this->playing($boxToken, $next->playlist_order);
+
+			http_response_code(200);
 			return json_encode($next);
 		} else {
+			http_response_code(200);
 			return json_encode(false);
 		}
 	}

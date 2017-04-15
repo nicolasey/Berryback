@@ -43,7 +43,7 @@ class ChatController extends BaseController
 		$data = json_decode(file_get_contents("php://input"), true);
 
 		$now = new \DateTime();
-		$insert = DB::select("INSERT INTO roomchat_$box(
+		DB::select("INSERT INTO roomchat_$box(
 		message_scope, message_type, message_author, message_destination, message_time, message_contents)
 		VALUES (:scope, :type, :author, :destination, :time, :contents)",
 			[
