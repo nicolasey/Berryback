@@ -149,6 +149,16 @@ class PlayerController extends BaseController
 		}
 	}
 
+	// UPDATE video in the playlist
+	public function update($boxToken, $video){
+		$video = json_decode(file_get_contents("php://input"), true);
+		DB::table('roomHistory_'.$boxToken)
+			->where('room_history_id', $video["room_history_id"])
+			->update(['video_status' => $video["video_status"]]);
+
+		http_response_code(200);
+		return json_encode("Video updated successfully");
+	}
 	private function playing($boxToken, $playlistOrder){
 		$now = new \DateTime();
 		DB::table('roomHistory_'.$boxToken)

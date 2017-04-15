@@ -26,6 +26,7 @@ Route::group(['prefix' => 'v1', 'middleware' => 'cors'], function(){
 	Route::get('box/{token}/playlist/current', 'PlayerController@current');
 	Route::get('box/{token}/playlist/next', 'PlayerController@next');
 	Route::post('box/{token}/playlist', 'PlayerController@store');
+	Route::put('box/{token}/playlist/{video}', 'PlayerController@update');
 
     Route::get('box/{token}/chat/all', 'ChatController@listing');
     Route::post('box/{token}/chat', 'ChatController@store');
