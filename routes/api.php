@@ -27,6 +27,7 @@ Route::group(['prefix' => 'v1', 'middleware' => 'cors'], function(){
 	Route::get('box/{token}/playlist/next', 'PlayerController@next');
 	Route::get('box/{token}/playlist/shuffle', 'PlayerController@shuffle');
 	Route::post('box/{token}/playlist', 'PlayerController@store');
+	Route::post('box/{token}/playlist/swap', 'PlayerController@swap');
 	Route::put('box/{token}/playlist/{video}', 'PlayerController@update');
 
     Route::get('box/{token}/chat/all', 'ChatController@listing');

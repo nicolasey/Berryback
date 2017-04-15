@@ -140,7 +140,7 @@ class PlayerController extends BaseController
 	}
 
 	// UPDATE video in the playlist
-	public function update($boxToken, $video){
+	public function update($boxToken){
 		$video = json_decode(file_get_contents("php://input"), true);
 		DB::table('roomHistory_'.$boxToken)
 			->where('room_history_id', $video["room_history_id"])
@@ -174,6 +174,35 @@ class PlayerController extends BaseController
 
 		http_response_code(200);
 		echo json_encode("Playlist shuffled succesfully");
+	}
+
+	// Swap two videos
+	public function swap($boxToken){
+		$action = json_decode(file_get_contents("php://input"), true);
+		$table = 'roomHistory_'.$boxToken;
+
+		if($action['direction'] == "up"){
+			DB::table($table)
+				->where('playlist_order', ++$action["playlist_order"])
+				->decrement('playlist_order');
+
+			DB::table($table)
+				->where('room_history_id', $action["room_history_id"])
+				->increment('playlist_order');
+		}
+
+		if($action['direction'] == "down"){
+			DB::table($table)
+				->where('playlist_order', --$action["playlist_order"])
+				->increment('playlist_order');
+
+			DB::table($table)
+				->where('room_history_id', $action["room_history_id"])
+				->decrement('playlist_order');
+		}
+
+		http_response_code(200);
+		echo json_encode("Videos swapped successfully");
 	}
 
 	private function playing($boxToken, $playlistOrder){
