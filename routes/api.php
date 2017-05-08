@@ -38,4 +38,5 @@ Route::group(['prefix' => 'v1', 'middleware' => 'cors'], function(){
     Route::resource('user', 'UserController');
     Route::get('user/{token}/boxes', 'UserController@boxes');
     Route::get('user/{token}/stats', 'UserController@stats');
+    Route::get('user/{token}/likes', 'UserController@likes');
 });

@@ -77,6 +77,20 @@ class UserController extends BaseController
 		return json_encode($stats[0]);
 	}
 
+	public function likes($token)
+	{
+		$table = "votes";
+		$likes = DB::table($table)
+			->join('song_base', $table.'.video_index', '=', 'song_base.song_base_id')
+			->select('video_index', 'link', 'video_name', 'vote_mood')
+			->where('user_token', $token)
+			->orderBy('vote_mood', 'asc')
+			->get();
+		
+		http_response_code(200);
+		return json_encode($likes);
+	}
+
 	public function create()
 	{
 
