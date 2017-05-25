@@ -113,45 +113,4 @@ class BoxController extends BaseController
 
         return json_encode($users);
     }
-
-    // POST to playlist
-    public function submit($box)
-    {
-        echo "bonjour";
-        //$link = json_decode(file_get_contents("php://input"), true);
-
-        // Check song base
-        //$base = DB::select("SELECT * FROM song_base WHERE link = '$link'");
-
-        // If the video doesn't exist in the Berrybox base
-        /*if($base->rowCount() == 0){
-            try {
-                // We try to get the contents from the YouTube databases
-                $content = file_get_contents("http://youtube.com/get_video_info?video_id=".$link);
-                parse_str($content, $ytarr):
-                $title = addslashes($ytarr["title"]);
-                $pending = 0;
-                if($title == ""){
-                    $title = "-";
-                    $pending = 1;
-                }
-            } catch(Exception $e){
-                $title = "-";
-                $pending = 1;
-            }
-
-            DB::post("INSERT INTO song_base(link, video_name, pending)
-                      VALUES(:link, :title, :pending)",
-                [
-                    ':link' => $link,
-                    ':title' => $title,
-                    ':pending' => $pending
-                ]
-            );
-        } else {
-            echo $base->title;
-        }*/
-
-    }
-
 }

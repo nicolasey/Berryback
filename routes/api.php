@@ -39,4 +39,8 @@ Route::group(['prefix' => 'v1', 'middleware' => 'cors'], function(){
     Route::get('user/{token}/boxes', 'UserController@boxes');
     Route::get('user/{token}/stats', 'UserController@stats');
     Route::get('user/{token}/likes', 'UserController@likes');
+
+    Route::post('moods/check', 'MoodController@check');
+    Route::post('moods', 'MoodController@store');
+    Route::delete('moods/{id}', 'MoodController@destroy');
 });

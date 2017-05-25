@@ -85,6 +85,6 @@ class ChatController extends BaseController
 
 		$delete = DB::select($stmt, [':id' => $id]);
 
-		http_response_code(204);
+		http_response_code(200);
 	}
 }
