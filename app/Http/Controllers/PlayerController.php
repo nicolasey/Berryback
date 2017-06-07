@@ -31,7 +31,7 @@ class PlayerController extends BaseController
 
 	// Fetches playlist for a box
 	public function listing($boxToken){
-		$table = 'roomHistory_'.$boxToken;
+		$table = 'room_history_'.$boxToken;
 
 		$listing = DB::table($table)
 			->join('song_base', $table.'.video_index', '=', 'song_base.song_base_id')
@@ -88,7 +88,7 @@ class PlayerController extends BaseController
 
 	// GET the current playing video
 	public function current($boxToken){
-		$table = 'roomHistory_'.$boxToken;
+		$table = 'room_history_'.$boxToken;
 
 		$current = DB::table($table)
 			->join('song_base', $table.'.video_index', '=', 'song_base.song_base_id')
@@ -110,7 +110,7 @@ class PlayerController extends BaseController
 
 	// GET the next video in the playlist
 	public function next($boxToken){
-		$table = 'roomHistory_'.$boxToken;
+		$table = 'room_history_'.$boxToken;
 
 		$next = DB::table($table)
 			->join('song_base', $table.'.video_index', '=', 'song_base.song_base_id')
@@ -123,7 +123,7 @@ class PlayerController extends BaseController
 
 		// We skip over ignored videos and put them all to 2 as well as the one that just ended
 		if($next){
-			DB::table('roomHistory_'.$boxToken)
+			DB::table('room_history_'.$boxToken)
 				->where([
 					['playlist_order', '<', $next->playlist_order],
 					['video_status', '!=', 2]
@@ -142,7 +142,7 @@ class PlayerController extends BaseController
 	// UPDATE video in the playlist
 	public function update($boxToken){
 		$video = json_decode(file_get_contents("php://input"), true);
-		DB::table('roomHistory_'.$boxToken)
+		DB::table('room_history_'.$boxToken)
 			->where('room_history_id', $video["room_history_id"])
 			->update(['video_status' => $video["video_status"]]);
 
@@ -153,7 +153,7 @@ class PlayerController extends BaseController
 	// Shuffles playlist
 	public function shuffle($boxToken){
 
-		$query = DB::table('roomHistory_'.$boxToken)
+		$query = DB::table('room_history_'.$boxToken)
 			->whereIn('video_status', [0, 3]);
 
 		$queue = $query
@@ -167,7 +167,7 @@ class PlayerController extends BaseController
 			->get();
 
 		for($i = 0; $i < sizeof($queue); $i++){
-			DB::table('roomHistory_'.$boxToken)
+			DB::table('room_history_'.$boxToken)
 				->where('room_history_id', $queue[$i]->room_history_id)
 				->update(['playlist_order' => $order[$i]->playlist_order]);
 		}
@@ -179,7 +179,7 @@ class PlayerController extends BaseController
 	// Swap two videos
 	public function swap($boxToken){
 		$action = json_decode(file_get_contents("php://input"), true);
-		$table = 'roomHistory_'.$boxToken;
+		$table = 'room_history_'.$boxToken;
 
 		if($action['direction'] == "up"){
 			DB::table($table)
@@ -207,7 +207,7 @@ class PlayerController extends BaseController
 
 	private function playing($boxToken, $playlistOrder){
 		$now = new \DateTime();
-		DB::table('roomHistory_'.$boxToken)
+		DB::table('room_history_'.$boxToken)
 			->where('playlist_order', $playlistOrder)
 			->update([
 				'video_status' => 1,
@@ -227,7 +227,7 @@ class PlayerController extends BaseController
 	}
 
 	private function getLastOrder($boxToken){
-		$order = DB::table('roomHistory_'.$boxToken)
+		$order = DB::table('room_history_'.$boxToken)
 			->latest('playlist_order')
 			->pluck('playlist_order')
 			->first();
@@ -238,7 +238,7 @@ class PlayerController extends BaseController
 	private function insertToBox($boxToken, Array $video){
 		$now = new \DateTime();
 
-		$insert = DB::table('roomHistory_'.$boxToken)->insert([
+		$insert = DB::table('room_history_'.$boxToken)->insert([
 			'video_index' => $video["index"],
 			'playlist_order' => $video["order"],
 			'history_time' => $now,

@@ -29,7 +29,7 @@ class ChatController extends BaseController
 					message_destination AS destination,
 					message_time AS time,
 					message_contents AS contents
- 					FROM roomChat_$box rc
+ 					FROM room_chat_$box rc
  					JOIN user u ON rc.message_author = u.user_token
  					JOIN user_preferences up ON rc.message_author = up.user_token
  					ORDER BY message_id ASC";
@@ -43,7 +43,7 @@ class ChatController extends BaseController
 		$data = json_decode(file_get_contents("php://input"), true);
 
 		$now = new \DateTime();
-		DB::select("INSERT INTO roomchat_$box(
+		DB::select("INSERT INTO room_chat_$box(
 		message_scope, message_type, message_author, message_destination, message_time, message_contents)
 		VALUES (:scope, :type, :author, :destination, :time, :contents)",
 			[
@@ -65,7 +65,7 @@ class ChatController extends BaseController
 		$data = json_decode(file_get_contents("php://input"), true);
 
 		$now = new \DateTime();
-		$stmt = "UPDATE roomchat_$box
+		$stmt = "UPDATE room_chat_$box
 				SET message_contents = :contents
 				 WHERE message_id = :id";
 		$update = DB::select($stmt,
@@ -80,7 +80,7 @@ class ChatController extends BaseController
 
 	// Delete a message
 	public function destroy($box, $id){
-		$stmt = "DELETE FROM roomchat_$box
+		$stmt = "DELETE FROM room_chat_$box
 				WHERE message_id = :id";
 
 		$delete = DB::select($stmt, [':id' => $id]);
