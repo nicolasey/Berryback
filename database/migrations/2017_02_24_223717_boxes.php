@@ -14,7 +14,7 @@ class Boxes extends Migration
     public function up()
     {
         Schema::create('boxes', function(Blueprint $table){
-           $table->incremets('id');
+           $table->increments('id');
            $table->string('box_token');
            $table->timestamps();
         });
